@@ -1,0 +1,54 @@
+changes in projectA:
+— changed alloc, can reuse the block that was disposed before. The reason that I change the implementation of allocating a block is because it is a heap file layer, so there is no need to let the records be ordered, as well as the blocks that contains records. So we can reuse the block that had been disposed before so the disk space can be used more efficiently. 
+
+— changed open file. Instead of only count the number of block the file has, also count the record number each block has and initiate the metadata of that file.
+-- changed metadata struct, add recCount, bitmapR, and curRecord to track the information of records in each block of the file.
+
+- changed close file. When we close a file, make all the related scan closed too. So the closed scan can be reused for other files.
+
+— add scanmap struct, which is used for track the information of each scan.
+
+— change the BM_init(). 
+
+for projectB:
+RecordID indicate the position that a record is in. Each recordID is a fixed position that within a file. For example: if the record is 32Bytes each, the record with recordID = 0 is the first 32bytes data in a file and the record with a recordID = X is the 32X - (32X + 32) bytes data in a file. If each page is 4096Bytes, then each page contains 256 records. So the record with a recordID = 256 is the first record in the second page of a file.
+
+— HFL_init()
+call BM_init(). Because when we manipulate records, use memory can be faster a lot than directly edit the file on the disk.
+
+- HFL_create_file()
+call BM_create_file(). Because they have the same functionality.
+
+- HFL_open_file()
+call BM_open_file(). Since I changed the BM_open_file(), they have the same functionality now.
+
+— HFL_close_file() 
+call BM_close_file. Since I changed the BM_close_file(), they have the same functionality now.
+
+— HFL_insert_rec()
+First check if the file has no block. If it is, allocate a new block for it, call this function again. If not, search for a block that is not full, which means the number of records a block contains is less than the biggest number that a block can have. If all the blocks are full, allocate a new block than try to insert the record. All the procedures are done in the buffer pool, so if some block of the file is modified, mark this block as dirty, so it can be unpinned later. Since the recordID cannot be any negative number, if this function returns a negative number, it indicate something wrong with the insertion. So when we call this function, we can check if the return number is less than 0. If it is, report the error.
+
+— HFL_delete_rec()
+First get the position for the given recordID(which block and the position within the block). Then get the block, change the related data and metadata. 
+
+— HFL_get_first_rec()
+Here, my decision of “first record” is the record with a recordID equal to 0 (the first record in a file). Call HFL_get_this_rec() with recordID = 0. So if this record has been deleted before, error will occur. 
+
+— HFL_get_this_rec()
+When we get the recordID, first calculate which block contains this record and which position that the record is in. Create a record struct and its pointer to store the record content after we get the block. Lastly, make the **rec be the record pointer we created before and update the curRecord, which is used to keep tracking the next recordID.
+
+- HFL_get_next_rec()
+As I mentioned before, use curRecord of a file, we can know which is the “next” record that we want. Then we can call HFL_get_this_rec() to finish the task.
+
+— HFL_open_file_scan()
+Since some scans that opened before can be closed. We may can reuse the scan. So we check the metadata for scans to find the first not opened scanID as the fresh scan’s ID.
+
+— HFL_find_next_rec()
+Since the metadata for each scan stores the information that tracks the current scanned records, which is the currentRec. We can use this to determine which record should we get next. Then call HFL_get_this_rec() to get this record.
+
+- HFL_close_file_scan()
+This function update the metadata for scans based on the scanID. filescan[sd].opening == ’n’, indicate the scan is not opening now and can be reused lately.
+
+For the test cases, I test each function individually first, than add functions one by one to test the correctness. Use few records first than use large amount of records. 
+
+Also, since this interface only cares about the records, when comes to practice, we also need to use the interface of partA (BM_unpinned()) to write the whole block data back to the disk.
