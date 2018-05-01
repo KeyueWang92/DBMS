@@ -94,7 +94,9 @@ errCode HFL_delete_rec(fileDesc fd, recordID rid)
         //since we change the data in the bufferpool, this block is dirty now
         blockPtr->dirty = 1;
         return 0;
-    } else return 0; 
+    }
+    //has been deleted already
+    return 0; 
 }
 
 

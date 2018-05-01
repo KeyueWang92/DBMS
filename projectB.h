@@ -1,5 +1,5 @@
 
-/*Use reord.h to define your record struct
+/*Use reord.h to define record struct
  */
 
 
@@ -25,7 +25,7 @@ errCode HFL_create_file(char* filename);
 /* Open an existing file with the given filename and return a file descriptor.*/
 fileDesc HFL_open_file(char* filename);
 
-/* Close an open file with the given filename. */
+/* Close an open file with the given file descriptor. */
 errCode HFL_close_file(fileDesc fd);
 
 /* Insert a record into the file identified by fd.*/

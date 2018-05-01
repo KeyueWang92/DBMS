@@ -27,7 +27,7 @@ typedef struct _metadata{
     int blockCount; //count the number of block that the file contains
     int bitmap[1000];//a bitmap that indicate whether the block has been disposed/empty or not, if yes set it to 0(default), otherwise 1
     int recCount[1000];//this indicate how many records that each block contains
-    char bitmapR[1000][256];//a bitmap that indicate whether a slot contains a record or not. 'y' for yes.
+    char bitmapR[1000][256];//a bitmap that indicate whether a slot contains a record or not. 'y' for yes. 'n' for no.
     int curRecord;//show the current recordID that the file is scanned
 } metadata;
 
@@ -38,27 +38,23 @@ typedef struct _scanmap {
 } scanmap; //struct that track the information of several scans
 
 /*Perform necessary initializations for the buffer layer. 
- *This probably involves creating a buffer pool with a specified
- *size and frame size (you can make these parameters to the function
- *or define them as constants in your code), and initializing bookkeeping
+ *This involves creating a buffer pool with a specified
+ *size and frame size, and initializing bookkeeping
  *variables for each frame in the pool.
  */
 void BM_init();
 
 /*Create a new DB file on disk.
- *You can use a C library function to help you with this. 
  *Return 0 if the operation succeeds or an error code if it fails.
  */
 errCode BM_create_file( const char *filename );
 
 /*Open an existing file and return a file descriptor for it.
- *A C library function will help you open the file.
  */
 fileDesc BM_open_file( const char *filename ); 
 
 /*Close an opened file and return 0 if the operation succeeds
  *or an error code if it fails. 
- *Again, you can use a C library function for this.
  */
 errCode BM_close_file( fileDesc fd );
 
